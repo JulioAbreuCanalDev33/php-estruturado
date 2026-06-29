@@ -1,0 +1,107 @@
+name: Security Checks
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    name: Security Scan
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mbstring, intl
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Check for hardcoded secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: PHP Security Checker
+        run: |
+          wget https://github.com/sensiolabs/security-checker/releases/download/v6.0.3/security-checker.phar
+          php security-checker.phar check composer.lock
+
+      - name: Run PHP CodeSniffer
+        run: |
+          composer require --dev squizlabs/php_codesniffer
+          ./vendor/bin/phpcs --standard=PSR12 . --ignore=vendor,tests
+        continue-on-error: true
+
+      - name: Static Analysis with PHPStan
+        run: |
+          composer require --dev phpstan/phpstan
+          ./vendor/bin/phpstan analyse src --level=6
+        continue-on-error: true
+
+      - name: Check for known vulnerabilities in dependencies
+        run: |
+          composer install --prefer-dist
+          composer audit
+        continue-on-error: true
+
+  lint:
+    runs-on: ubuntu-latest
+    name: PHP Lint
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+
+      - name: Lint PHP files
+        run: find . -name "*.php" -type f ! -path "./vendor/*" -exec php -l {} \;
+
+  env-check:
+    runs-on: ubuntu-latest
+    name: Environment Variables Check
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for .env file in repository
+        run: |
+          if [ -f .env ]; then
+            echo "ERROR: .env file should not be committed to the repository!"
+            exit 1
+          fi
+          echo "✓ .env file not found in repository (Good!)"
+
+      - name: Check for common sensitive files
+        run: |
+          SENSITIVE_FILES=(".env" "config/database.php" "credentials.json" "secrets.json")
+          FOUND=0
+          for file in "${SENSITIVE_FILES[@]}"; do
+            if git log --all --full-history -- "$file" | grep -q "commit"; then
+              echo "WARNING: $file appears in git history"
+              FOUND=1
+            fi
+          done
+          if [ $FOUND -eq 1 ]; then
+            echo "Consider using BFG Repo-Cleaner or git-filter-branch to remove sensitive data"
+          fi
