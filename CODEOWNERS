@@ -1,0 +1,20 @@
+# CODEOWNERS - GitHub Code Ownership and Review Policy
+# This file defines who should review code changes
+
+# Default owner for everything
+* @JulioAbreuCanalDev33
+
+# Security-related files
+SECURITY.md @JulioAbreuCanalDev33
+.github/workflows/security* @JulioAbreuCanalDev33
+.env.example @JulioAbreuCanalDev33
+
+# Configuration files
+*.yml @JulioAbreuCanalDev33
+*.yaml @JulioAbreuCanalDev33
+composer.json @JulioAbreuCanalDev33
+composer.lock @JulioAbreuCanalDev33
+
+# Documentation
+*.md @JulioAbreuCanalDev33
+docs/ @JulioAbreuCanalDev33
