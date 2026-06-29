@@ -1,0 +1,60 @@
+# Environment Configuration
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+/vendor/
+/node_modules/
+composer.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+/logs/
+*.log
+
+# Cache
+/cache/
+/tmp/
+*.cache
+
+# Temporary files
+/temp/
+*.tmp
+
+# Build artifacts
+/build/
+/dist/
+
+# Test coverage
+/coverage/
+.phpunit.result.cache
+
+# OS Files
+Thumbs.db
+.DS_Store
+.directory
+
+# Credentials and Secrets
+credentials.json
+secrets.json
+*.pem
+*.key
+*.crt
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+
+# Editor backup files
+*~
+*.bak
+*.swp
